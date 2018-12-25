@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH -J RunInterp
+#SBATCH -N 1
+#SBATCH -n 1 # Number of cores 
+#SBATCH -o Run_InterpolateDataSummary_%A%a.out
+#SBATCH -e Run_InterpolateDataSummary_%A%a.err
+#SBATCH -t 3000 #Runtime in minutes 
+#SBATCH -p shared #Partition to submit to 
+#SBATCH --mem=50000 #Memory per cpu in MB (see also --mem)
+#SBATCH --mail-type=END      #Type of email notification- BEGIN,END,FAIL,ALL
+#SBATCH --mail-user=qiandi@mail.harvard.edu  #Email to which notifications will be sent
+
+cd /n/regal/jschwrtz_lab/qdi/USTemperature/raw_data/matlab_to_interpolate/
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}"",[datenum(2010,1,1),datenum(2010,12,31)],1,nan)"

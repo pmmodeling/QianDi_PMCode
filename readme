@@ -1,0 +1,1531 @@
+													##################################################
+################ Dictionary ######################
+##################################################
+
+*Raw Data/Raw File*
+â€œraw dataâ€? or â€œraw fileâ€? refers the any kinds of data we downloaded/obtained from external sources. They can be any format: raster, grid, NetCDF, shapefile, etc. They may have different spatial, temporal resolutions; may be contaminated by missing values etc; If raw data are daily measurements, they may have multiple measurement for the same location within a single day, or no measurements at all in a single day.
+
+*Aggregated Data/Aggregated File*
+We processed raw data and matched data to consistent grid cells, and call the processed data â€œaggregated dataâ€?.
+
+*Input Data/Input File*
+We interpolated aggregated data to monitoring sites or grid cells. Files are stored in separated files by variables.
+
+*Assemble Data/Assemble File*
+We put input data from different variables together and stored the merged file, which is ready to do model training.
+
+*Trained Model and Model Training*
+We fed input data into machine learning algorithms to train the model. The model after training process (such as neural network with weights updated) is called â€œtrained modelâ€?. This process is called â€œmodel trainingâ€?.
+
+*Grid cells/Grids*
+We call the location of monitoring sites or 1 km grid cells to make predictions at â€œgrid cellsâ€? or â€œgridsâ€?. Grid cells are presented by a table with id number, latitude, and longitude. The latitude and longitude values dependent on geographic coordinate system.
+
+##################################################
+######### Folder structure #######################
+##################################################
+
+./raw_data/	folder for raw data, aggregate data, and relevant code
+./raw_data/matlab_to_aggregate/	code files that process raw data to obtain aggregate data
+./raw_data/matlab_to_interpolate/	code files that process aggregate data to obtain input data
+./raw_data/download_scripts/	script that download raw data
+./raw_data/data/unprocessed/	folder that store raw data
+./raw_data/data/aggregate/	folder that store aggregate data
+./raw_data/data/shapefile/	folder that store relevant shape files
+
+./processed_data/	folder for input data
+./processed_data/AQRVPM25/	folder for input data at PM2.5 monitoring site
+./processed_data/EPACastNetOzone/	folder for input data at ozone monitoring site
+./processed_data/EPANO2/	folder for input data at NO2 monitoring site
+./processed_data/TempData/	folder for temporarily files for data imputation
+./processed_data/DataProcessRecorder/	folder for temporarily files for obtaining input data
+./processed_data/matlab_to_assemble/	code files that merge input data together to obtain assemble data
+
+./assembled_data/	folder for assemble data
+
+./predictions/	folder for prediction outputs
+
+##################################################
+################ Flow Chart ######################
+##################################################
+
+For flowchart, please refer to flowchart.pdf
+
+##################################################
+################# Manuals ########################
+##################################################
+
+Step 1: Download Raw Data
+Download raw data from different sources
+Run: run a download makefile
+
+Step 2: Process Raw Data to Obtain Aggregate Data
+Process raw data to obtain aggregate data, making data align to consistent grid cells. Aggregate data are daily or annual data files at consistent grid cells; or raster files;
+Run: Run_AggregateDataSummary(year)
+
+Step 3: Process Aggregate Data to Obtain Input Data
+Interpolate aggregate data to obtain input data at grid cells of interests (e.g., at monitoring site, or 1 km grid cells); data are stored as separate files by variable.
+Run: 
+Run_InterpolateDataSummary('AQRVPM25', [datenum(year,1,1),datenum(year,12,31)],0,nan)
+Run_InterpolateDataSummary('EPACastNetOzone', [datenum(year,1,1),datenum(year,12,31)],0,nan)
+Run_InterpolateDataSummary('EPANO2', [datenum(year,1,1),datenum(year,12,31)],0,nan)
+
+Step 4: Merge Input data from different variables together to obtain assemble data
+Run: 
+Run_AssembleDataSummary(1,99941,2008,'All_round3','PM25','AllRecords','');
+Run_AssembleDataSummary(1,99941,2008,'All_round3','Ozone','AllRecords','');
+Run_AssembleDataSummary(1,99941,2008,'All_round3','NO2','AllRecords','');
+
+
+Step 5: run model training;
+Run: 
+Analysis_RunModel(1,99941,year ,'All_round3','PM25','AllRecords',''); 
+Analysis_RunModel(1,99941,year ,'All_round3','Ozone','AllRecords','');
+Analysis_RunModel(1,99941,year ,'All_round3','NO2','AllRecords','');
+Note
+Assemble data are in matlab file format and will be stored at ./assembled_data/, by different subfolders. Use testH20_convert.R to convert them into rds format.
+
+
+##################################################
+################# About Python Code###############
+##################################################
+
+*Note:* it is worth mentioning that not all raw data were processed by matlab files; some of them were processed by python files. All Landuse variables, including NLCD landuse data, NLCD impervious, NLCD tree canopy, Restaurant density, road density, elevation (all raw data under the /raw_data/data/unprocessed/LANDUSE/) were processed by python code (see github https://github.com/NSAPH/PythonCode)
+
+########################################################################################################################################
+##################################################
+###########Laundry List of Files #################
+##################################################
+
+
+###################################################
+### control files, files that are actually running:
+###################################################
+Run_AggregateDataSummary
+â€¢	Controller file process raw data
+â€¢	upload to . /raw_data/matlab_to_aggregate/
+â€¢	file dependence: 
+o	USMERRA2aerSite.mat and USMERRA2aerSite_North_America_Equidistant_Conic.mat at ./raw_data/data/aggregate /MERRA2aer/ 
+o	USMOD11A1Site.mat and USMOD11A1Site_North_America_Equidistant_Conic.mat at ./raw_data/data/aggregate/MOD11A1/;
+o	USMOD04L2Site.mat and USMOD04L2Site_North_America_Equidistant_Conic.mat at ./raw_data/data/aggregate/ MOD04L2/;
+o	USMAIACUS5kmSite_North_America_Equidistant_Conic.mat, USMAIACUS5kmSite.mat, USMAIACUS1kmSite_North_America_Equidistant_Conic.mat, USMAIACUS1kmSite.mat at ./ raw_data/data/aggregate/MAIACUS/
+o	USMAIACUS5kmSite_North_America_Equidistant_Conic.mat, USMAIACUS5kmSite.mat, USMAIACUS1kmSite_North_America_Equidistant_Conic.mat, USMAIACUS1kmSite.mat at ./ raw_data/data/aggregate/MAIACUS/
+o	USOMAERUVdSite.mat and  USOMAERUVdSite_North_America_Equidistant_Conic.mat at ./raw_data/data/aggregate/OMAERUVd/
+o	USOMAEROeSite.mat and USOMAEROeSite_North_America_Equidistant_Conic.mat at ./raw_data/data/aggregate/OMAEROe/;
+o	USOMNO2dSite.mat and USOMNO2dSite_North_America_Equidistant_Conic.mat at ./raw_data/data/aggregate/OMNO2d/;
+o	USOMSO2eSite.mat and USOMSO2eSite_North_America_Equidistant_Conic.mat at ./raw_data/data/aggregate/OMSO2e/;
+o	USOMTO3eSite.mat and USOMTO3eSite_North_America_Equidistant_Conic.mat at ./raw_data/data/aggregate/OMTO3e/;
+o	USOMUVBdSite.mat and USOMUVBdSite_North_America_Equidistant_Conic.mat at ./raw_data/data/aggregate/OMUVBd/
+o	USOMO3PRSite.mat and USOMO3PRSite_North_America_Equidistant_Conic.mat at ./raw_data/data/aggregate/OMO3PR/
+o	USCMAQSite.mat and USCMAQSite_North_America_Equidistant_Conic.mat at ./raw_data/data/aggregate/CMAQ/; 
+o	USGFEDSite.mat and USGFEDSite_North_America_Equidistant_Conic.mat at ./raw_data/data/aggregate/CFED/; 
+
+Run_InterpolateDataSummary.m
+â€¢	controller file that interpolates from aggregated data and produces input data and stored the output by variable
+â€¢	upload to ./raw_data/ matlab_to_interpolate/
+â€¢	file dependence:  grid cells files placed under ./processed_data/your_grid_cell_name/Location/; Monitoring data placed at ./processed_data/your_grid_cell_name/Monitor/
+â€¢	Output folder: input data at /processed_data/Your_grid_cell_name/
+
+Run_AssembleDataSummary.m
+â€¢	The controller file that assembles input data separated by variables together
+â€¢	upload to ./processed_data/matlab_to_assemble/
+
+
+Analysis_RunModel.m
+â€¢	controller file that assemble input data separated by variable together to produce an assemble file, then do model training;
+â€¢	upload to ./processed_data/matlab_to_assemble/
+â€¢	file dependence: VariableList_[IDNUM].csv ready, IDNUM is the model ID number to distinguish different models;
+â€¢	output: Assembled data at ./assembled_data/, stored by folder
+
+##########################################
+#### files called when processing raw data
+###########################################
+
+Read_RestaurantData.m
+â€¢	Process raw restaurant data; 
+â€¢	Called by Run_AggregateDataSummary
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+ReadMERRA2aer.m
+â€¢	Process MERRA 2 data set to obtain aggregate data;
+â€¢	Called by Run_AggregateDataSummary;
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+ReadMOD11A1_Main.m
+â€¢	Process MOD11A1 (surface radiation) data set to obtain aggregate data;
+â€¢	Called by Run_AggregateDataSummary;
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+ReadMOD04L2_Main
+â€¢	Process MOD04L2 (550 nm AOD data) data set to obtain aggregate data;
+â€¢	Called by Run_AggregateDataSummary;
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+ReadMAIAC_Main.m
+â€¢	Process MAIAC AOD data set to obtain aggregate data;
+â€¢	Called by Run_AggregateDataSummary;
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+ReadMODIS_Main.m:
+â€¢	Process MOD13A2 (NDVI) and MOD09A1 (surface reflectance) data set to obtain aggregate data;
+â€¢	Called by Run_AggregateDataSummary;
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+ReadOMIAIData_Main.m 
+â€¢	Process OMAERUVd, OMAEROe, OMNO2d, OMSO2e, OMTO3e, OMUVBd data set to obtain aggregate data;
+â€¢	Called by Run_AggregateDataSummary;
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+ReadOMO3PR_Main.m
+â€¢	Process OMO3PR (ozone vertical profile) data set to obtain aggregate data;
+â€¢	Called by Run_AggregateDataSummary;
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+ReadCMAQSite.m
+â€¢	Process CMAQ simulations to obtain aggregate data;
+â€¢	Called by Run_AggregateDataSummary;
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+ReadForestfire.m;
+â€¢	Process forest fire data set to obtain aggregate data;
+â€¢	Called by Run_AggregateDataSummary;
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+ReadMODIS_function1.m
+â€¢	read MODIS data and extract value of interests
+â€¢	called by ReadMOD11A1_Main, ReadMODIS_Main
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+ReadOMIAIData_function.m
+â€¢	read OMI aerosol index data
+â€¢	called by ReadOMIAIData_Main
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+LoadData_function.m
+â€¢	load matlab files
+â€¢	called by ReadCMAQSite, ReadForestfire, ReadMERRA2aer, ReadMOD04L2_Main
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+Visualization_USResult_1.m
+â€¢	make maps
+â€¢	Called by ReadCMAQSite, ReadForestfire, ReadMAIAC_Main, ReadMERRA2aer, ReadMOD04L2_Main, ReadMODIS_Main, ReadOMIAIData_Main, ReadOMO3PR_Main
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+InterpMyData_2.m
+â€¢	2D interpolation
+â€¢	Called by ReadCMAQSite, ReadMOD04L2_Main, ReadOMO3PR_Main
+â€¢	upload to ./raw_data/matlab_to_aggregate/
+
+################################################
+#### files called when processing aggregate data
+#################################################
+
+InterpMyData_2.m
+â€¢	2D interpolation
+â€¢	Called by Interpolate_3hourPressureLevelReanalysis_Main.m, Interpolate_3hourReanalysis_Main.m
+â€¢	upload to ./assembled_data/matlab_to_interpolate/
+
+Interpolate_OMI_Main.m
+â€¢	Extract values from OMI data set; it can also extract values from MOD04L2, forest fire, CMAQ output
+â€¢	Called by Run_InterpolateDataSummary
+â€¢	upload to ./raw_data/matlab_to_interpolate/
+
+Interpolate_NearbyMonitor_Main.m
+â€¢	calculate averaged monitoring data
+â€¢	Called by Run_InterpolateDataSummary
+â€¢	upload to ./raw_data/matlab_to_interpolate/
+
+Interpolate_MOD11A1_Main.m
+â€¢	main function to extract values from MOD11A1; it can also extract value from MAIAC AOD aggregate files
+â€¢	Called by Run_InterpolateDataSummary
+â€¢	upload to ./raw_data/matlab_to_interpolate/
+
+Interpolate_Generic_Main.m
+â€¢	extract data from MOD13A2 and MOD09A1 MODIS data
+â€¢	Called by Run_InterpolateDataSummary
+â€¢	upload to ./raw_data/matlab_to_interpolate/
+
+Interpolate_MCD12Q1_Main.m
+â€¢	extract value for grid cells of interests from all types of MCD12Q1
+â€¢	Called by Run_InterpolateDataSummary
+â€¢	upload to ./raw_data/matlab_to_interpolate/
+
+Interpolate_LandUse_Main.m
+â€¢	extract value for grid cells of interests from land use raster files
+â€¢	Called by Run_InterpolateDataSummary
+â€¢	upload to ./raw_data/matlab_to_interpolate/
+
+Interpolate_3hourPressureLevelReanalysis_Main.m
+â€¢	read 3-hour reanalysis data at vertical level and interpolate to locations
+â€¢	Called by Run_InterpolateDataSummary
+â€¢	upload to ./raw_data/matlab_to_interpolate/
+
+Interpolate_3hourReanalysis_Main.m
+â€¢	read 3-hour reanalysis data and interpolate to locations
+â€¢	Called by Run_InterpolateDataSummary
+â€¢	upload to ./raw_data/matlab_to_interpolate/
+
+Interpolate_3hourReanalysis_function.m
+â€¢	a local function called while reading meteorological data remove missing, filling, max, min values from meteorological files
+â€¢	Called by Run_InterpolateDataSummary
+â€¢	upload to ./raw_data/matlab_to_interpolate/
+
+MultipleWeightMatrix.m and MultipleWeightMatrix_1.m
+â€¢	matrix multiplication while ignoring nan values
+â€¢	Called by Interpolate_Generic_Main.m, Interpolate_MOD11A1_Main.m, Interpolate_NearbyMonitor_Main.m, Interpolate_OMI_Main.m
+â€¢	upload to ./assembled_data/matlab_to_interpolate/
+
+LoadData_function.m
+â€¢	load matlab files
+â€¢	Called by Interpolate_3hourPressureLevelReanalysis_Main.m, Interpolate_3hourReanalysis_Main.m, Interpolate_Generic_Main.m, Interpolate_LandUse_Main.m, Interpolate_MCD12Q1_Main.m, Interpolate_MOD11A1_Main.m, Interpolate_NearbyMonitor_Main.m, Interpolate_OMI_Main.m
+â€¢	upload to ./assembled_data/matlab_to_interpolate/
+
+Visualization_USResult_1.m
+â€¢	make maps
+â€¢	Called by Interpolate_3hourPressureLevelReanalysis_Main.m, Interpolate_3hourReanalysis_Main.m, Interpolate_Generic_Main.m, Interpolate_LandUse_Main.m, Interpolate_MCD12Q1_Main.m, Interpolate_MOD11A1_Main.m, Interpolate_NearbyMonitor_Main.m, Interpolate_OMI_Main.m
+â€¢	upload to ./assembled_data/matlab_to_interpolate/
+
+LagData.m
+â€¢	take lagged value
+â€¢	called by Interpolate_NearbyMonitor_Main
+â€¢	upload to ./assembled_data/matlab_to_interpolate/
+
+
+#######################################
+#### files called when assembling data
+#######################################
+
+
+VariableList_99941.csv and VariableList_999411.csv 
+â€¢	Configuration file that specify which variables to be used as input variables
+â€¢	used by Run_AssembleDataSummary
+â€¢	upload to ./processed_data/matlab_to_assemble/
+
+Analysis_InputDataDescriptiveAnalysis.m
+â€¢	descriptive stat of input variables
+â€¢	called by Run_AssembleDataSummary
+â€¢	upload to ./processed_data/matlab_to_assemble/
+
+Analysis_ImputationInputData.m
+â€¢	data imputation
+â€¢	called by Run_AssembleDataSummary
+â€¢	upload to ./processed_data/matlab_to_assemble/
+
+Analysis_ReadInputData.m
+â€¢	Read input variable and assemble together
+â€¢	called by Run_AssembleDataSummary
+â€¢	upload to ./processed_data/matlab_to_assemble/
+
+LoadData_function.m
+â€¢	load matlab files
+â€¢	called by Run_AssembleDataSummary,Analysis_InputDataDescriptiveAnalysis,Analysis_ImputationInputData,Analysis_ReadInputData
+â€¢	upload to ./processed_data/matlab_to_assemble/
+
+
+#######################################
+#### files used to train model
+#######################################
+
+Analysis_ResultDescriptiveAnalysis.m
+â€¢	calculate R2 between fitted value and monitored value
+â€¢	called by Analysis_FitModel, Analysis_FitModel_function1, Analysis_ResultDescriptiveAnalysis, Analysis_RunModel 
+â€¢	upload to ./assembled_data/code_to_train/	
+
+Analysis_InputDataDescriptiveAnalysis.m
+â€¢	descriptive stat of input variables
+â€¢	called by Analysis_FitModel_function1, Analysis_InputDataDescriptiveAnalysis, Analysis_RunModel
+â€¢	upload to ./assembled_data/code_to_train/
+
+Analysis_TwoStep.m, Analysis_CalculateSpatialAverage.m
+â€¢	Calculate averaged fitted value from neighboring days and nearby monitoring site as input variables
+â€¢	called by Analysis_FitModel_function1, Analysis_RunModel
+â€¢	upload to ./assembled_data/code_to_train/
+
+Analysis_Transform_fucntion1.m
+â€¢	transform the data; and de-transform data
+â€¢	called by Analysis_RunModel
+â€¢	upload to ./assembled_data/code_to_train/
+
+Analysis_ReadInputData.m
+â€¢	Read input variable and assemble together
+â€¢	called by Analysis_RunModel
+â€¢	upload to ./assembled_data/code_to_train/
+
+Analysis_NeuralNetwork.m
+â€¢	fit neural network and other machine learning algorithms
+â€¢	called by Analysis_FitModel, Analysis_FitModel_function1
+â€¢	upload to ./assembled_data/code_to_train/
+
+Analysis_ImputationInputData.m
+â€¢	data imputation
+â€¢	called by Analysis_RunModel
+â€¢	upload to ./assembled_data/code_to_train/
+
+Analysis_FitModel_function1.m
+â€¢	update neighboring days and nearby monitoring site as input variables in a two-stage setting
+â€¢	called by Analysis_FitModel
+â€¢	upload to ./assembled_data/code_to_train/
+
+Analysis_FitModel_function2.m
+â€¢	return the records to be used in a cross-validation setting
+â€¢	called by Analysis_FitModel
+â€¢	upload to ./assembled_data/code_to_train/	
+
+Analysis_FitModel.m
+â€¢	fit model either with 100% training data or in a cross-validated way
+â€¢	called by Analysis_RunModel
+â€¢	upload to ./assembled_data/code_to_train/
+
+isnan_matrix.m
+â€¢	Return the index of missing value inside a matrix
+â€¢	called by Analysis_FitModel_function2, Analysis_InputDataDescriptiveAnalysis
+â€¢	upload to ./assembled_data/code_to_train/
+
+CalculateRsquare.m
+â€¢	Calculation R2
+â€¢	called by Analysis_FitModel_function1, Analysis_ResultDescriptiveAnalysis
+â€¢	upload to ./assembled_data/code_to_train/
+
+MultipleWeightMatrix.m and MultipleWeightMatrix_1.m
+â€¢	matrix multiplication while ignoring nan values
+â€¢	upload to ./assembled_data/code_to_train/
+
+VariableList_99941.csv and VariableList_999411.csv 
+â€¢	Configuration file that specify which variables to be used as input variables
+â€¢	upload to ./assembled_data/code_to_train/
+
+InterpMyData_2.m
+â€¢	2D interpolation
+â€¢	Called by Analysis_RunModel
+â€¢	upload to ./assembled_data/code_to_train/
+
+Visualization_USResult_1.m
+â€¢	make maps
+â€¢	Called by Analysis_RunModel
+â€¢	upload to ./assembled_data/code_to_train/
+
+LoadData_function.m
+â€¢	load matlab files
+â€¢	called by Analysis_ImputationInputData, Analysis_ReadInputData, Analysis_RunModel, Analysis_TwoStep, â€¢	upload to . 
+â€¢	upload to ./assembled_data/code_to_train/
+
+VariableList_99941.csv and VariableList_999411.csv 
+â€¢	Configuration file that specify which variables to be used as input variables
+â€¢	used by Run_AssembleDataSummary
+â€¢	upload to ./assembled_data/code_to_train/
+
+
+#######################################
+######### output examples #############
+#######################################
+Below information was excerpted from the full output. This excerpted output was used to notify users what the output looked like 
+when processing the data for the first time.
+
+
+##########################################
+## Output from Run_AggregateDataSummary###
+##########################################
+
+# processing Merra 2 data; example output, print out file name:
+processing...MERRA2_400.inst3_3d_aer_Nv.20150101.SUB.nc4
+processing...MERRA2_400.inst3_3d_aer_Nv.20150102.SUB.nc4
+processing...MERRA2_400.inst3_3d_aer_Nv.20150103.SUB.nc4
+processing...MERRA2_400.inst3_3d_aer_Nv.20150104.SUB.nc4
+processing...MERRA2_400.inst3_3d_aer_Nv.20150105.SUB.nc4
+processing...MERRA2_400.inst3_3d_aer_Nv.20150106.SUB.nc4
+processing...MERRA2_400.inst3_3d_aer_Nv.20150107.SUB.nc4
+processing...MERRA2_400.inst3_3d_aer_Nv.20150108.SUB.nc4
+processing...MERRA2_400.inst3_3d_aer_Nv.20150109.SUB.nc4
+processing...MERRA2_400.inst3_3d_aer_Nv.20150110.SUB.nc4
+
+
+# processing MOD11A1 data; example output, print out processed file name by tile by day:
+01-Jan-2015
+processing..2015-01-01
+	MOD11A1.A2015001.h08v04.006.2016212060159.hdf
+	MOD11A1.A2015001.h08v05.006.2016212060205.hdf
+	MOD11A1.A2015001.h08v06.006.2016212060205.hdf
+	MOD11A1.A2015001.h09v04.006.2016212060214.hdf
+	MOD11A1.A2015001.h09v05.006.2016212060216.hdf
+	MOD11A1.A2015001.h09v06.006.2016212060207.hdf
+	MOD11A1.A2015001.h10v04.006.2016212060215.hdf
+	MOD11A1.A2015001.h10v05.006.2016212060209.hdf
+	MOD11A1.A2015001.h10v06.006.2016212060207.hdf
+	MOD11A1.A2015001.h11v04.006.2016212060216.hdf
+	MOD11A1.A2015001.h11v05.006.2016212060213.hdf
+	MOD11A1.A2015001.h11v06.006.2016212060208.hdf
+	MOD11A1.A2015001.h12v04.006.2016212060229.hdf
+	MOD11A1.A2015001.h12v05.006.2016212060218.hdf
+	MOD11A1.A2015001.h13v04.006.2016212060217.hdf
+02-Jan-2015
+processing..2015-01-02
+	MOD11A1.A2015002.h08v04.006.2016212061654.hdf
+	MOD11A1.A2015002.h08v05.006.2016212061701.hdf
+	MOD11A1.A2015002.h08v06.006.2016212061657.hdf
+	MOD11A1.A2015002.h09v04.006.2016212061657.hdf
+	MOD11A1.A2015002.h09v05.006.2016212061656.hdf
+	MOD11A1.A2015002.h09v06.006.2016212061651.hdf
+	MOD11A1.A2015002.h10v04.006.2016212061657.hdf
+	MOD11A1.A2015002.h10v05.006.2016212061650.hdf
+	MOD11A1.A2015002.h10v06.006.2016212061650.hdf
+	MOD11A1.A2015002.h11v04.006.2016212061650.hdf
+	MOD11A1.A2015002.h11v05.006.2016212061653.hdf
+	MOD11A1.A2015002.h11v06.006.2016212061645.hdf
+	MOD11A1.A2015002.h12v04.006.2016212061723.hdf
+	MOD11A1.A2015002.h12v05.006.2016212061718.hdf
+	MOD11A1.A2015002.h13v04.006.2016212061718.hdf
+	
+# processing MOD04L2 data, print out processed file by day by tile; also print out the percentage of missing values
+2015-01-01
+	MOD04_L2.A2015001.1535.006.2015034063228.hdf
+nan:0.974713
+	MOD04_L2.A2015001.1540.006.2015034063702.hdf
+nan:0.952454
+	MOD04_L2.A2015001.1715.006.2015034062347.hdf
+nan:0.973107
+	MOD04_L2.A2015001.1720.006.2015033150936.hdf
+nan:0.932348
+	MOD04_L2.A2015001.1850.006.2015034062326.hdf
+nan:0.998796
+	MOD04_L2.A2015001.1855.006.2015034063022.hdf
+nan:0.908606
+	MOD04_L2.A2015001.2030.006.2015034062230.hdf
+nan:1.000000
+2015-01-02
+	MOD04_L2.A2015002.1440.006.2015035115904.hdf
+nan:1.000000
+	MOD04_L2.A2015002.1615.006.2015035120001.hdf
+nan:1.000000
+	MOD04_L2.A2015002.1620.006.2015035120129.hdf
+nan:0.985185
+	MOD04_L2.A2015002.1625.006.2015035120420.hdf
+nan:0.947893
+	MOD04_L2.A2015002.1755.006.2015035120156.hdf
+nan:0.996278
+	MOD04_L2.A2015002.1800.006.2015035120120.hdf
+nan:0.906003
+	MOD04_L2.A2015002.1935.006.2015035120013.hdf
+nan:0.989637
+	MOD04_L2.A2015002.1940.006.2015035115923.hdf
+nan:0.993140
+
+# processing Aqua MAIAC data; print out processed file by day by tile;
+01-Jan-2015
+processing..2015-01-01
+	MAIACAAOT.h01v03.20150012035.hdf
+	MAIACAAOT.h01v03.20150012215.hdf
+	MAIACAAOT.h01v04.20150012035.hdf
+	MAIACAAOT.h01v04.20150012215.hdf
+	MAIACAAOT.h01v05.20150012030.hdf
+	MAIACAAOT.h02v03.20150011900.hdf
+	MAIACAAOT.h02v03.20150012035.hdf
+	MAIACAAOT.h02v04.20150011855.hdf
+	MAIACAAOT.h02v04.20150012035.hdf
+	MAIACAAOT.h02v05.20150012030.hdf
+	MAIACAAOT.h03v03.20150011720.hdf
+	MAIACAAOT.h03v03.20150011900.hdf
+	MAIACAAOT.h03v03.20150012035.hdf
+	MAIACAAOT.h03v04.20150011855.hdf
+	MAIACAAOT.h03v04.20150012035.hdf
+	MAIACAAOT.h03v05.20150011855.hdf
+	MAIACAAOT.h03v05.20150012030.hdf
+	MAIACAAOT.h04v03.20150011720.hdf
+	MAIACAAOT.h04v03.20150011900.hdf
+	MAIACAAOT.h04v04.20150011720.hdf
+	MAIACAAOT.h04v04.20150011855.hdf
+	MAIACAAOT.h04v05.20150011855.hdf
+	MAIACAAOT.h05v03.20150011540.hdf
+	MAIACAAOT.h05v03.20150011720.hdf
+02-Jan-2015
+processing..2015-01-02
+	MAIACAAOT.h01v03.20150022120.hdf
+	MAIACAAOT.h01v03.20150022300.hdf
+	MAIACAAOT.h01v04.20150022120.hdf
+	MAIACAAOT.h01v05.20150022115.hdf
+	MAIACAAOT.h02v03.20150021940.hdf
+	MAIACAAOT.h02v03.20150022120.hdf
+	MAIACAAOT.h02v04.20150021940.hdf
+	MAIACAAOT.h02v04.20150022120.hdf
+	MAIACAAOT.h02v05.20150021935.hdf
+	MAIACAAOT.h02v05.20150022115.hdf
+	MAIACAAOT.h03v03.20150021800.hdf
+	MAIACAAOT.h03v03.20150021940.hdf
+	MAIACAAOT.h03v04.20150021800.hdf
+	MAIACAAOT.h03v04.20150021940.hdf
+	MAIACAAOT.h03v05.20150021935.hdf
+	MAIACAAOT.h04v03.20150021625.hdf
+	MAIACAAOT.h04v03.20150021800.hdf
+	MAIACAAOT.h04v03.20150021940.hdf
+	MAIACAAOT.h04v04.20150021800.hdf
+	MAIACAAOT.h04v04.20150021940.hdf
+	MAIACAAOT.h04v05.20150021800.hdf
+	MAIACAAOT.h04v05.20150021935.hdf
+	MAIACAAOT.h05v03.20150021625.hdf
+	MAIACAAOT.h05v03.20150021800.hdf
+	
+# processing Terra MAIAC data; print out processed file by day by tile;
+01-Jan-2015
+processing..2015-01-01
+	MAIACTAOT.h01v03.20150011855.hdf
+	MAIACTAOT.h01v03.20150012035.hdf
+	MAIACTAOT.h01v04.20150011855.hdf
+	MAIACTAOT.h01v04.20150012035.hdf
+	MAIACTAOT.h01v05.20150011900.hdf
+	MAIACTAOT.h02v03.20150011715.hdf
+	MAIACTAOT.h02v03.20150011855.hdf
+	MAIACTAOT.h02v04.20150011720.hdf
+	MAIACTAOT.h02v04.20150011855.hdf
+	MAIACTAOT.h02v05.20150011720.hdf
+	MAIACTAOT.h02v05.20150011900.hdf
+	MAIACTAOT.h03v03.20150011715.hdf
+	MAIACTAOT.h03v03.20150011850.hdf
+	MAIACTAOT.h03v04.20150011715.hdf
+	MAIACTAOT.h03v05.20150011720.hdf
+	MAIACTAOT.h04v03.20150011535.hdf
+	MAIACTAOT.h04v03.20150011715.hdf
+	MAIACTAOT.h04v04.20150011540.hdf
+	MAIACTAOT.h04v04.20150011715.hdf
+	MAIACTAOT.h04v05.20150011540.hdf
+	MAIACTAOT.h04v05.20150011720.hdf
+	MAIACTAOT.h05v03.20150011400.hdf
+	MAIACTAOT.h05v03.20150011535.hdf
+02-Jan-2015
+processing..2015-01-02
+	MAIACTAOT.h01v03.20150021800.hdf
+	MAIACTAOT.h01v03.20150021940.hdf
+	MAIACTAOT.h01v03.20150022115.hdf
+	MAIACTAOT.h01v04.20150021800.hdf
+	MAIACTAOT.h01v04.20150021940.hdf
+	MAIACTAOT.h01v05.20150021805.hdf
+	MAIACTAOT.h01v05.20150021940.hdf
+	MAIACTAOT.h02v03.20150021800.hdf
+	MAIACTAOT.h02v03.20150021935.hdf
+	MAIACTAOT.h02v04.20150021800.hdf
+	MAIACTAOT.h02v04.20150021935.hdf
+	MAIACTAOT.h02v05.20150021805.hdf
+	MAIACTAOT.h03v03.20150021620.hdf
+	MAIACTAOT.h03v03.20150021800.hdf
+	MAIACTAOT.h03v04.20150021620.hdf
+	MAIACTAOT.h03v04.20150021800.hdf
+	MAIACTAOT.h03v05.20150021625.hdf
+	MAIACTAOT.h03v05.20150021805.hdf
+	MAIACTAOT.h04v03.20150021440.hdf
+	MAIACTAOT.h04v03.20150021620.hdf
+	MAIACTAOT.h04v03.20150021755.hdf
+	MAIACTAOT.h04v04.20150021620.hdf
+	MAIACTAOT.h04v05.20150021625.hdf
+	MAIACTAOT.h05v03.20150021440.hdf
+	MAIACTAOT.h05v03.20150021620.hdf
+	
+	
+## processing MOD13A2; print out processed file by day by tile; not all days have MOD13A2 measurements; 
+# also print out the number and percentage of missing values; 
+2015-01-01
+17
+processing..2015-01-01
+	MOD13A2.A2015001.h08v04.006.2015295101249.hdf
+	count and percentage of nan data:313768	9.921700e-01
+	MOD13A2.A2015001.h08v05.006.2015295101251.hdf
+	count and percentage of nan data:1420824	9.271611e-01
+	MOD13A2.A2015001.h08v06.006.2015295100648.hdf
+	count and percentage of nan data:864000	8.854107e-01
+	MOD13A2.A2015001.h09v04.006.2015295101621.hdf
+	count and percentage of nan data:1183076	8.292160e-01
+	MOD13A2.A2015001.h09v05.006.2015295101252.hdf
+	count and percentage of nan data:1440000	7.464091e-01
+	MOD13A2.A2015001.h09v06.006.2015295100645.hdf
+	count and percentage of nan data:864000	7.271550e-01
+	MOD13A2.A2015001.h10v03.006.2015295101300.hdf
+	count and percentage of nan data:282135	7.115178e-01
+	MOD13A2.A2015001.h10v04.006.2015295101254.hdf
+	count and percentage of nan data:1440000	6.289266e-01
+	MOD13A2.A2015001.h10v05.006.2015295100658.hdf
+	count and percentage of nan data:1440000	5.475146e-01
+	MOD13A2.A2015001.h10v06.006.2015295100643.hdf
+	count and percentage of nan data:864000	5.390605e-01
+	MOD13A2.A2015001.h11v03.006.2015295100653.hdf
+	count and percentage of nan data:288000	5.224884e-01
+	MOD13A2.A2015001.h11v04.006.2015295100650.hdf
+	count and percentage of nan data:1440000	4.430197e-01
+	MOD13A2.A2015001.h11v05.006.2015295100640.hdf
+	count and percentage of nan data:1440000	3.935406e-01
+	MOD13A2.A2015001.h11v06.006.2015295100642.hdf
+	count and percentage of nan data:864000	3.933252e-01
+	MOD13A2.A2015001.h12v04.006.2015295101251.hdf
+	count and percentage of nan data:1440000	3.272660e-01
+	MOD13A2.A2015001.h12v05.006.2015295100644.hdf
+	count and percentage of nan data:1090678	3.243732e-01
+	MOD13A2.A2015001.h13v04.006.2015295101246.hdf
+	count and percentage of nan data:691575	2.975893e-01
+	percentage of nan:0.297589	max:10000.000000	mean:2509.421703	min:-2000.000000
+2015-01-02
+0
+2015-01-03
+0
+2015-01-04
+0
+2015-01-05
+0
+2015-01-06
+0
+2015-01-07
+0
+2015-01-08
+0
+2015-01-09
+0
+2015-01-10
+0
+2015-01-11
+0
+2015-01-12
+0
+2015-01-13
+0
+2015-01-14
+0
+2015-01-15
+0
+2015-01-16
+0
+2015-01-17
+17
+processing..2015-01-17
+	MOD13A2.A2015017.h08v04.006.2015295120233.hdf
+	count and percentage of nan data:313768	9.921640e-01
+	MOD13A2.A2015017.h08v05.006.2015295120224.hdf
+	count and percentage of nan data:1420824	9.271465e-01
+	MOD13A2.A2015017.h08v06.006.2015295115637.hdf
+	count and percentage of nan data:864000	8.854013e-01
+	MOD13A2.A2015017.h09v04.006.2015295120405.hdf
+	count and percentage of nan data:1183076	8.291317e-01
+	MOD13A2.A2015017.h09v05.006.2015295120218.hdf
+	count and percentage of nan data:1440000	7.463162e-01
+	MOD13A2.A2015017.h09v06.006.2015295115832.hdf
+	count and percentage of nan data:864000	7.271007e-01
+	MOD13A2.A2015017.h10v03.006.2015295120029.hdf
+	count and percentage of nan data:282135	7.113305e-01
+	MOD13A2.A2015017.h10v04.006.2015295115842.hdf
+	count and percentage of nan data:1440000	6.286606e-01
+	MOD13A2.A2015017.h10v05.006.2015295120225.hdf
+	count and percentage of nan data:1440000	5.472454e-01
+	MOD13A2.A2015017.h10v06.006.2015295120028.hdf
+	count and percentage of nan data:864000	5.388123e-01
+	MOD13A2.A2015017.h11v03.006.2015295120231.hdf
+	count and percentage of nan data:288000	5.222376e-01
+	MOD13A2.A2015017.h11v04.006.2015295120234.hdf
+	count and percentage of nan data:1440000	4.422270e-01
+	MOD13A2.A2015017.h11v05.006.2015295120234.hdf
+	count and percentage of nan data:1440000	3.927448e-01
+	MOD13A2.A2015017.h11v06.006.2015295115832.hdf
+	count and percentage of nan data:864000	3.925366e-01
+	MOD13A2.A2015017.h12v04.006.2015295120417.hdf
+	count and percentage of nan data:1440000	3.255894e-01
+	MOD13A2.A2015017.h12v05.006.2015295115630.hdf
+	count and percentage of nan data:1090678	3.226951e-01
+	MOD13A2.A2015017.h13v04.006.2015295115224.hdf
+	count and percentage of nan data:691575	2.959314e-01
+	percentage of nan:0.295931	max:10000.000000	mean:2702.462716	min:-2000.000000
+	
+## processing MOD09A1; print out processed file by day by tile; not all days have MOD09A1 measurements; 
+# also print out the number and percentage of missing values; 	
+2015-01-01
+17
+processing..2015-01-01
+	MOD09A1.A2015001.h08v04.006.2015295093200.hdf
+	count and percentage of nan data:5760000	9.411765e-01
+	MOD09A1.A2015001.h08v05.006.2015295093104.hdf
+	count and percentage of nan data:5760000	8.823530e-01
+	MOD09A1.A2015001.h08v06.006.2015295091732.hdf
+	count and percentage of nan data:5760000	8.235294e-01
+	MOD09A1.A2015001.h09v04.006.2015295093427.hdf
+	count and percentage of nan data:5760000	7.647059e-01
+	MOD09A1.A2015001.h09v05.006.2015295092207.hdf
+	count and percentage of nan data:5760000	7.058824e-01
+	MOD09A1.A2015001.h09v06.006.2015295094219.hdf
+	count and percentage of nan data:5760000	6.470588e-01
+	MOD09A1.A2015001.h10v03.006.2015295092257.hdf
+	count and percentage of nan data:5760000	5.882353e-01
+	MOD09A1.A2015001.h10v04.006.2015295092334.hdf
+	count and percentage of nan data:5760000	5.294118e-01
+	MOD09A1.A2015001.h10v05.006.2015295092733.hdf
+	count and percentage of nan data:5760000	4.705882e-01
+	MOD09A1.A2015001.h10v06.006.2015295092601.hdf
+	count and percentage of nan data:5760000	4.117647e-01
+	MOD09A1.A2015001.h11v03.006.2015295093010.hdf
+	count and percentage of nan data:5760000	3.529412e-01
+	MOD09A1.A2015001.h11v04.006.2015295092420.hdf
+	count and percentage of nan data:5760000	2.941177e-01
+	MOD09A1.A2015001.h11v05.006.2015295092240.hdf
+	count and percentage of nan data:5760000	2.352941e-01
+	MOD09A1.A2015001.h11v06.006.2015295091800.hdf
+	count and percentage of nan data:5760000	1.764706e-01
+	MOD09A1.A2015001.h12v04.006.2015295092433.hdf
+	count and percentage of nan data:5760000	1.176471e-01
+	MOD09A1.A2015001.h12v05.006.2015295092430.hdf
+	count and percentage of nan data:5760000	5.882354e-02
+	MOD09A1.A2015001.h13v04.006.2015295091822.hdf
+	count and percentage of nan data:5760000	1.021242e-08
+	percentage of nan:0.000000	max:16000.000000	mean:1886.316808	min:-100.000000
+2015-01-02
+0
+2015-01-03
+0
+2015-01-04
+0
+2015-01-05
+0
+2015-01-06
+0
+2015-01-07
+0
+2015-01-08
+0
+2015-01-09
+17
+processing..2015-01-09
+	MOD09A1.A2015009.h08v04.006.2015295140838.hdf
+	count and percentage of nan data:5760000	9.411765e-01
+	MOD09A1.A2015009.h08v05.006.2015295140619.hdf
+	count and percentage of nan data:5760000	8.823529e-01
+	MOD09A1.A2015009.h08v06.006.2015295140309.hdf
+	count and percentage of nan data:5760000	8.235294e-01
+	MOD09A1.A2015009.h09v04.006.2015295141141.hdf
+	count and percentage of nan data:5760000	7.647059e-01
+	MOD09A1.A2015009.h09v05.006.2015295140529.hdf
+	count and percentage of nan data:5760000	7.058824e-01
+	MOD09A1.A2015009.h09v06.006.2015295140015.hdf
+	count and percentage of nan data:5760000	6.470588e-01
+	MOD09A1.A2015009.h10v03.006.2015295140621.hdf
+	count and percentage of nan data:5760000	5.882353e-01
+	MOD09A1.A2015009.h10v04.006.2015295140526.hdf
+	count and percentage of nan data:5760000	5.294118e-01
+	MOD09A1.A2015009.h10v05.006.2015295140101.hdf
+	count and percentage of nan data:5760000	4.705882e-01
+	MOD09A1.A2015009.h10v06.006.2015295140033.hdf
+	count and percentage of nan data:5760000	4.117647e-01
+	MOD09A1.A2015009.h11v03.006.2015295140326.hdf
+	count and percentage of nan data:5760000	3.529412e-01
+	MOD09A1.A2015009.h11v04.006.2015295140230.hdf
+	count and percentage of nan data:5760000	2.941176e-01
+	MOD09A1.A2015009.h11v05.006.2015295140137.hdf
+	count and percentage of nan data:5760000	2.352941e-01
+	MOD09A1.A2015009.h11v06.006.2015295140059.hdf
+	count and percentage of nan data:5760000	1.764706e-01
+	MOD09A1.A2015009.h12v04.006.2015295140531.hdf
+	count and percentage of nan data:5760000	1.176471e-01
+	MOD09A1.A2015009.h12v05.006.2015295140124.hdf
+	count and percentage of nan data:5760000	5.882353e-02
+	MOD09A1.A2015009.h13v04.006.2015295140952.hdf
+	count and percentage of nan data:5760000	0
+	percentage of nan:0.000000	max:15999.000000	mean:1839.268639	min:1.000000
+	
+## processing OMAERUVd; print out processed file names by day; each day has measurements available; 
+# also print out some descriptive information; 	
+
+2015-01-01
+	OMI-Aura_L3-OMAERUVd_2015m0101_v003-2017m0821t145637.he5
+		UVAerosolIndex---	nan percentage:0.494519	max:2.259600	mean:0.292568	min:-1.051500
+		FinalAerosolSingleScattAlb500---	nan percentage:0.943704	max:0.995800	mean:0.925068	min:0.855200
+2015-01-02
+	OMI-Aura_L3-OMAERUVd_2015m0102_v003-2017m0821t145632.he5
+		UVAerosolIndex---	nan percentage:0.487407	max:1.715000	mean:0.321844	min:-1.548400
+		FinalAerosolSingleScattAlb500---	nan percentage:0.964444	max:0.984100	mean:0.915727	min:0.856900
+2015-01-03
+	OMI-Aura_L3-OMAERUVd_2015m0103_v003-2017m0821t145629.he5
+		UVAerosolIndex---	nan percentage:0.487704	max:1.928300	mean:0.309876	min:-0.584000
+		FinalAerosolSingleScattAlb500---	nan percentage:0.950222	max:0.994100	mean:0.922689	min:0.853400
+2015-01-04
+	OMI-Aura_L3-OMAERUVd_2015m0104_v003-2017m0821t145650.he5
+		UVAerosolIndex---	nan percentage:0.489185	max:1.975800	mean:0.296028	min:-0.957900
+		FinalAerosolSingleScattAlb500---	nan percentage:0.944000	max:0.999900	mean:0.935069	min:0.856100
+2015-01-05
+	OMI-Aura_L3-OMAERUVd_2015m0105_v003-2017m0821t145649.he5
+		UVAerosolIndex---	nan percentage:0.483852	max:1.800200	mean:0.247434	min:-1.205500
+		FinalAerosolSingleScattAlb500---	nan percentage:0.913778	max:0.989500	mean:0.921102	min:0.859700
+2015-01-06
+	OMI-Aura_L3-OMAERUVd_2015m0106_v003-2017m0821t145646.he5
+		UVAerosolIndex---	nan percentage:0.487407	max:2.725600	mean:0.300256	min:-1.037800
+		FinalAerosolSingleScattAlb500---	nan percentage:0.908444	max:0.998200	mean:0.922873	min:0.854000
+2015-01-07
+	OMI-Aura_L3-OMAERUVd_2015m0107_v003-2017m0821t145649.he5
+		UVAerosolIndex---	nan percentage:0.480296	max:2.370000	mean:0.305356	min:-1.277600
+		FinalAerosolSingleScattAlb500---	nan percentage:0.922963	max:0.997600	mean:0.923805	min:0.845900
+2015-01-08
+	OMI-Aura_L3-OMAERUVd_2015m0108_v003-2017m0821t145645.he5
+		UVAerosolIndex---	nan percentage:0.480889	max:1.878500	mean:0.331206	min:-1.110100
+		FinalAerosolSingleScattAlb500---	nan percentage:0.929778	max:0.999400	mean:0.922369	min:0.865300
+2015-01-09
+	OMI-Aura_L3-OMAERUVd_2015m0109_v003-2017m0821t145647.he5
+		UVAerosolIndex---	nan percentage:0.470815	max:2.199000	mean:0.321346	min:-1.459400
+		FinalAerosolSingleScattAlb500---	nan percentage:0.938370	max:0.999600	mean:0.925506	min:0.857000
+2015-01-10
+	OMI-Aura_L3-OMAERUVd_2015m0110_v003-2017m0821t145645.he5
+		UVAerosolIndex---	nan percentage:0.474370	max:2.569900	mean:0.332940	min:-0.911100
+		FinalAerosolSingleScattAlb500---	nan percentage:0.946963	max:0.999300	mean:0.923544	min:0.858300
+
+## processing OMAEROe; print out processed file names by day; each day has measurements available; 
+# also print out some descriptive information for all variables of interests;
+2015-01-01
+	OMI-Aura_L3-OMAEROe_2015m0101_v003-2015m0103t013855.he5
+		VISAerosolIndex---	nan percentage:0.398833	max:12.620000	mean:-6.129567	min:-36.450001
+		UVAerosolIndex---	nan percentage:0.398833	max:3.230000	mean:0.524181	min:-2.600000
+		ViewingZenithAngle---	nan percentage:0.398833	max:69.478996	mean:52.554844	min:22.679001
+		SolarZenithAngle---	nan percentage:0.398833	max:87.041000	mean:64.731852	min:39.271999
+2015-01-02
+	OMI-Aura_L3-OMAEROe_2015m0102_v003-2015m0104t021202.he5
+		VISAerosolIndex---	nan percentage:0.400574	max:13.600000	mean:-4.860347	min:-32.860001
+		UVAerosolIndex---	nan percentage:0.400574	max:3.110000	mean:0.487008	min:-3.370000
+		ViewingZenithAngle---	nan percentage:0.400574	max:69.477997	mean:51.139909	min:20.511999
+		SolarZenithAngle---	nan percentage:0.400574	max:87.069000	mean:63.951587	min:39.195000
+2015-01-03
+	OMI-Aura_L3-OMAEROe_2015m0103_v003-2015m0105t012111.he5
+		VISAerosolIndex---	nan percentage:0.364815	max:12.730000	mean:-6.083580	min:-35.049999
+		UVAerosolIndex---	nan percentage:0.364815	max:2.900000	mean:0.494084	min:-3.220000
+		ViewingZenithAngle---	nan percentage:0.364815	max:69.482002	mean:51.930168	min:20.513000
+		SolarZenithAngle---	nan percentage:0.364815	max:85.233002	mean:64.908281	min:39.113998
+2015-01-04
+	OMI-Aura_L3-OMAEROe_2015m0104_v003-2015m0106t020427.he5
+		VISAerosolIndex---	nan percentage:0.398315	max:14.050000	mean:-4.423788	min:-33.689999
+		UVAerosolIndex---	nan percentage:0.364056	max:2.890000	mean:0.583598	min:-3.390000
+		ViewingZenithAngle---	nan percentage:0.364056	max:69.480003	mean:51.909455	min:20.513000
+		SolarZenithAngle---	nan percentage:0.364056	max:85.056999	mean:64.704791	min:38.932999
+2015-01-05
+	OMI-Aura_L3-OMAEROe_2015m0105_v003-2015m0107t010310.he5
+		VISAerosolIndex---	nan percentage:0.403241	max:15.030000	mean:-5.567245	min:-34.869999
+		UVAerosolIndex---	nan percentage:0.369463	max:2.890000	mean:0.461060	min:-3.940000
+		ViewingZenithAngle---	nan percentage:0.369463	max:69.482002	mean:51.798910	min:20.513000
+		SolarZenithAngle---	nan percentage:0.369463	max:84.837997	mean:64.640499	min:38.851002
+2015-01-06
+	OMI-Aura_L3-OMAEROe_2015m0106_v003-2015m0108t021302.he5
+		VISAerosolIndex---	nan percentage:0.419167	max:13.830000	mean:-6.968605	min:-36.990002
+		UVAerosolIndex---	nan percentage:0.386037	max:3.300000	mean:0.590036	min:-4.670000
+		ViewingZenithAngle---	nan percentage:0.386037	max:69.480003	mean:52.239100	min:20.511999
+		SolarZenithAngle---	nan percentage:0.386037	max:85.878998	mean:64.736840	min:38.626999
+2015-01-07
+	OMI-Aura_L3-OMAEROe_2015m0107_v003-2015m0109t005520.he5
+		VISAerosolIndex---	nan percentage:0.392426	max:13.660000	mean:-6.845780	min:-34.209999
+		UVAerosolIndex---	nan percentage:0.358056	max:3.800000	mean:0.510464	min:-4.410000
+		ViewingZenithAngle---	nan percentage:0.358056	max:69.480003	mean:51.634381	min:20.513000
+		SolarZenithAngle---	nan percentage:0.358056	max:84.553001	mean:64.110015	min:38.532001
+2015-01-08
+	OMI-Aura_L3-OMAEROe_2015m0108_v003-2015m0110t013153.he5
+		VISAerosolIndex---	nan percentage:0.377889	max:14.600000	mean:-5.874112	min:-36.349998
+		UVAerosolIndex---	nan percentage:0.377889	max:4.040000	mean:0.587620	min:-2.330000
+		ViewingZenithAngle---	nan percentage:0.377889	max:69.477997	mean:51.972835	min:20.513000
+		SolarZenithAngle---	nan percentage:0.377889	max:84.357002	mean:64.254899	min:38.344002
+2015-01-09
+	OMI-Aura_L3-OMAEROe_2015m0109_v003-2015m0111t021252.he5
+		VISAerosolIndex---	nan percentage:0.344333	max:13.920000	mean:-6.588794	min:-36.720001
+		UVAerosolIndex---	nan percentage:0.344333	max:2.830000	mean:0.564176	min:-3.460000
+		ViewingZenithAngle---	nan percentage:0.344333	max:69.475998	mean:51.670961	min:20.513000
+		SolarZenithAngle---	nan percentage:0.344333	max:84.598999	mean:63.786703	min:38.153000
+2015-01-10
+	OMI-Aura_L3-OMAEROe_2015m0110_v003-2015m0112t012323.he5
+		VISAerosolIndex---	nan percentage:0.369204	max:14.180000	mean:-6.294938	min:-38.480000
+		UVAerosolIndex---	nan percentage:0.369204	max:2.930000	mean:0.603543	min:-1.950000
+		ViewingZenithAngle---	nan percentage:0.369204	max:69.480003	mean:51.959729	min:20.513000
+		SolarZenithAngle---	nan percentage:0.369204	max:85.752998	mean:64.011795	min:38.077999
+
+
+## processing OMNO2d; print out processed file names by day; each day has measurements available; 
+# also print out some descriptive information;
+
+2015-01-01
+	OMI-Aura_L3-OMNO2d_2015m0101_v003-2016m0826t232248.he5
+		ColumnAmountNO2StratoCloudScreened---	nan percentage:0.724222	max:1942158625996800.000000	mean:1482698997298852.250000	min:144879187394560.000000
+2015-01-02
+	OMI-Aura_L3-OMNO2d_2015m0102_v003-2016m0826t231724.he5
+		ColumnAmountNO2StratoCloudScreened---	nan percentage:0.763722	max:1950894740471808.000000	mean:1445959341753817.250000	min:183516952264704.000000
+2015-01-03
+	OMI-Aura_L3-OMNO2d_2015m0103_v003-2016m0826t232255.he5
+		ColumnAmountNO2StratoCloudScreened---	nan percentage:0.734167	max:1984085845082112.000000	mean:1558957165866453.000000	min:229958370721792.000000
+2015-01-04
+	OMI-Aura_L3-OMNO2d_2015m0104_v003-2016m0826t232246.he5
+		ColumnAmountNO2StratoCloudScreened---	nan percentage:0.792481	max:1904979862355968.000000	mean:1604516284287846.750000	min:385991663681536.000000
+2015-01-05
+	OMI-Aura_L3-OMNO2d_2015m0105_v003-2016m0826t232753.he5
+		ColumnAmountNO2StratoCloudScreened---	nan percentage:0.728241	max:2015287138320384.000000	mean:1652790333697303.000000	min:440046175911936.000000
+2015-01-06
+	OMI-Aura_L3-OMNO2d_2015m0106_v003-2016m0826t232319.he5
+		ColumnAmountNO2StratoCloudScreened---	nan percentage:0.707630	max:1994209821196288.000000	mean:1627984685156601.000000	min:310324003602432.000000
+2015-01-07
+	OMI-Aura_L3-OMNO2d_2015m0107_v003-2016m0826t231719.he5
+		ColumnAmountNO2StratoCloudScreened---	nan percentage:0.698019	max:2105262173323264.000000	mean:1573561271019012.250000	min:567253384822784.000000
+2015-01-08
+	OMI-Aura_L3-OMNO2d_2015m0108_v003-2016m0826t232228.he5
+		ColumnAmountNO2StratoCloudScreened---	nan percentage:0.737185	max:1962767036710912.000000	mean:1498446703722200.000000	min:583084256788480.000000
+2015-01-09
+	OMI-Aura_L3-OMNO2d_2015m0109_v003-2016m0826t232242.he5
+		ColumnAmountNO2StratoCloudScreened---	nan percentage:0.731463	max:2016281389694976.000000	mean:1598146597825557.750000	min:635362095398912.000000
+2015-01-10
+	OMI-Aura_L3-OMNO2d_2015m0110_v003-2016m0826t232819.he5
+		ColumnAmountNO2StratoCloudScreened---	nan percentage:0.739093	max:1914293498937344.000000	mean:1597013613633975.000000	min:742670898561024.000000
+
+# processing OMSO2e; print out processed file names by day; each day has measurements available; 
+# also print out some descriptive information;
+
+2015-01-01
+	OMI-Aura_L3-OMSO2e_2015m0101_v003-2015m0226t075925.he5
+		ColumnAmountSO2_PBL---	nan percentage:0.797537	max:2.153913	mean:0.011180	min:-2.310705
+2015-01-02
+	OMI-Aura_L3-OMSO2e_2015m0102_v003-2015m0226t075946.he5
+		ColumnAmountSO2_PBL---	nan percentage:0.851667	max:8.046083	mean:0.021500	min:-2.502771
+2015-01-03
+	OMI-Aura_L3-OMSO2e_2015m0103_v003-2015m0226t075933.he5
+		ColumnAmountSO2_PBL---	nan percentage:0.798537	max:1.577025	mean:0.033366	min:-1.239236
+2015-01-04
+	OMI-Aura_L3-OMSO2e_2015m0104_v003-2015m0226t075928.he5
+		ColumnAmountSO2_PBL---	nan percentage:0.835093	max:2.217980	mean:0.031315	min:-1.288870
+2015-01-05
+	OMI-Aura_L3-OMSO2e_2015m0105_v003-2015m0226t080053.he5
+		ColumnAmountSO2_PBL---	nan percentage:0.806167	max:2.284446	mean:0.019609	min:-2.417970
+2015-01-06
+	OMI-Aura_L3-OMSO2e_2015m0106_v003-2015m0226t075816.he5
+		ColumnAmountSO2_PBL---	nan percentage:0.759611	max:2.635092	mean:0.027202	min:-1.571885
+2015-01-07
+	OMI-Aura_L3-OMSO2e_2015m0107_v003-2015m0226t075957.he5
+		ColumnAmountSO2_PBL---	nan percentage:0.800130	max:4.006037	mean:0.019285	min:-2.265734
+2015-01-08
+	OMI-Aura_L3-OMSO2e_2015m0108_v003-2015m0226t075743.he5
+		ColumnAmountSO2_PBL---	nan percentage:0.816963	max:2.652568	mean:0.030481	min:-1.751842
+2015-01-09
+	OMI-Aura_L3-OMSO2e_2015m0109_v003-2015m0226t075914.he5
+		ColumnAmountSO2_PBL---	nan percentage:0.803463	max:3.802536	mean:0.013612	min:-2.169395
+2015-01-10
+	OMI-Aura_L3-OMSO2e_2015m0110_v003-2015m0226t075803.he5
+		ColumnAmountSO2_PBL---	nan percentage:0.813759	max:2.516983	mean:0.010742	min:-1.772840
+		
+# processing OMTO3e; print out processed file names by day; each day has measurements available; 
+# also print out some descriptive information by variable of interests;
+2015-01-01
+	OMI-Aura_L3-OMTO3e_2015m0101_v003-2015m0108t113901.he5
+		ColumnAmountO3---	nan percentage:0.335889	max:430.000000	mean:293.134373	min:239.100006
+		ViewingZenithAngle---	nan percentage:0.335889	max:69.195999	mean:48.575689	min:16.243000
+2015-01-02
+	OMI-Aura_L3-OMTO3e_2015m0102_v003-2015m0108t113904.he5
+		ColumnAmountO3---	nan percentage:0.353500	max:411.899994	mean:290.124760	min:240.500000
+		ViewingZenithAngle---	nan percentage:0.353500	max:69.175003	mean:48.280896	min:16.243000
+2015-01-03
+	OMI-Aura_L3-OMTO3e_2015m0103_v003-2015m0108t113912.he5
+		ColumnAmountO3---	nan percentage:0.313944	max:460.500000	mean:295.338637	min:236.600006
+		ViewingZenithAngle---	nan percentage:0.313944	max:69.188004	mean:48.634783	min:16.245001
+2015-01-04
+	OMI-Aura_L3-OMTO3e_2015m0104_v003-2015m0108t113851.he5
+		ColumnAmountO3---	nan percentage:0.304241	max:429.000000	mean:299.570043	min:218.800003
+		ViewingZenithAngle---	nan percentage:0.304241	max:69.195000	mean:48.932308	min:16.243000
+2015-01-05
+	OMI-Aura_L3-OMTO3e_2015m0105_v003-2015m0108t113857.he5
+		ColumnAmountO3---	nan percentage:0.309537	max:497.700012	mean:308.813700	min:219.399994
+		ViewingZenithAngle---	nan percentage:0.309537	max:69.193001	mean:48.808518	min:16.243999
+2015-01-06
+	OMI-Aura_L3-OMTO3e_2015m0106_v003-2015m0108t113853.he5
+		ColumnAmountO3---	nan percentage:0.314222	max:513.000000	mean:306.342606	min:217.300003
+		ViewingZenithAngle---	nan percentage:0.314222	max:69.195000	mean:48.701108	min:16.243000
+2015-01-07
+	OMI-Aura_L3-OMTO3e_2015m0107_v003-2015m0109t002750.he5
+		ColumnAmountO3---	nan percentage:0.294426	max:536.099976	mean:314.851720	min:224.000000
+		ViewingZenithAngle---	nan percentage:0.294426	max:69.195999	mean:49.110231	min:16.243000
+2015-01-08
+	OMI-Aura_L3-OMTO3e_2015m0108_v003-2015m0110t010055.he5
+		ColumnAmountO3---	nan percentage:0.297185	max:549.599976	mean:322.763464	min:230.300003
+		ViewingZenithAngle---	nan percentage:0.297185	max:69.195000	mean:49.126122	min:16.243999
+2015-01-09
+	OMI-Aura_L3-OMTO3e_2015m0109_v003-2015m0111t014241.he5
+		ColumnAmountO3---	nan percentage:0.288315	max:570.599976	mean:332.564138	min:227.300003
+		ViewingZenithAngle---	nan percentage:0.288315	max:69.193001	mean:49.341615	min:16.243999
+2015-01-10
+	OMI-Aura_L3-OMTO3e_2015m0110_v003-2015m0112t005224.he5
+		ColumnAmountO3---	nan percentage:0.291074	max:562.299988	mean:333.829648	min:223.199997
+		ViewingZenithAngle---	nan percentage:0.291074	max:69.195999	mean:49.198040	min:16.243999
+		
+# processing OMUVBd; print out processed file names by day; each day has measurements available; 
+# also print out some descriptive information by variable of interests;
+2015-01-01
+	OMI-Aura_L3-OMUVBd_2015m0101_v003-2016m0804t100041.he5
+	OMI-Aura_L3-OMUVBd_2015m0101_v003-2016m0804t100041.he5.1
+		UVindex---	nan percentage:0.349037	max:8.687814	mean:2.352308	min:0.008913
+		ViewingZenithAngle---	nan percentage:0.349037	max:69.188515	mean:51.069711	min:20.522678
+		SolarZenithAngle---	nan percentage:0.349037	max:82.710838	mean:63.299079	min:40.162312
+2015-01-02
+	OMI-Aura_L3-OMUVBd_2015m0102_v003-2016m0804t102256.he5
+	OMI-Aura_L3-OMUVBd_2015m0102_v003-2016m0804t102256.he5.1
+		UVindex---	nan percentage:0.361778	max:8.711970	mean:2.412372	min:0.104606
+		ViewingZenithAngle---	nan percentage:0.361778	max:69.174545	mean:50.746142	min:20.522230
+		SolarZenithAngle---	nan percentage:0.361778	max:82.690384	mean:62.820181	min:40.078392
+2015-01-03
+	OMI-Aura_L3-OMUVBd_2015m0103_v003-2016m0804t104458.he5
+	OMI-Aura_L3-OMUVBd_2015m0103_v003-2016m0804t104458.he5.1
+		UVindex---	nan percentage:0.330667	max:9.249155	mean:2.359278	min:0.099427
+		ViewingZenithAngle---	nan percentage:0.330667	max:69.187408	mean:51.042830	min:20.522699
+		SolarZenithAngle---	nan percentage:0.330667	max:82.929222	mean:63.550171	min:39.995792
+2015-01-04
+	OMI-Aura_L3-OMUVBd_2015m0104_v003-2016m0804t110705.he5
+	OMI-Aura_L3-OMUVBd_2015m0104_v003-2016m0804t110705.he5.1
+		UVindex---	nan percentage:0.318815	max:9.161878	mean:2.294281	min:0.095895
+		ViewingZenithAngle---	nan percentage:0.318815	max:69.194679	mean:51.509275	min:20.522421
+		SolarZenithAngle---	nan percentage:0.318815	max:83.350426	mean:63.850062	min:39.800209
+2015-01-05
+	OMI-Aura_L3-OMUVBd_2015m0105_v003-2016m0804t112911.he5
+	OMI-Aura_L3-OMUVBd_2015m0105_v003-2016m0804t112911.he5.1
+		UVindex---	nan percentage:0.323556	max:9.194166	mean:2.389001	min:0.099325
+		ViewingZenithAngle---	nan percentage:0.323556	max:69.193230	mean:51.367308	min:20.522968
+		SolarZenithAngle---	nan percentage:0.323556	max:83.544846	mean:63.395875	min:39.689663
+2015-01-06
+	OMI-Aura_L3-OMUVBd_2015m0106_v003-2016m0804t115114.he5
+	OMI-Aura_L3-OMUVBd_2015m0106_v003-2016m0804t115114.he5.1
+		UVindex---	nan percentage:0.330667	max:9.170545	mean:2.561278	min:0.097484
+		ViewingZenithAngle---	nan percentage:0.330667	max:69.194778	mean:51.292197	min:20.523355
+		SolarZenithAngle---	nan percentage:0.330667	max:83.285896	mean:63.421688	min:39.499649
+2015-01-07
+	OMI-Aura_L3-OMUVBd_2015m0107_v003-2016m0804t121318.he5
+	OMI-Aura_L3-OMUVBd_2015m0107_v003-2016m0804t121318.he5.1
+		UVindex---	nan percentage:0.309333	max:9.202747	mean:2.554112	min:0.083071
+		ViewingZenithAngle---	nan percentage:0.309333	max:69.195259	mean:51.848855	min:20.523193
+		SolarZenithAngle---	nan percentage:0.309333	max:83.829124	mean:63.520453	min:39.377087
+2015-01-08
+	OMI-Aura_L3-OMUVBd_2015m0108_v003-2016m0804t123533.he5
+	OMI-Aura_L3-OMUVBd_2015m0108_v003-2016m0804t123533.he5.1
+		UVindex---	nan percentage:0.310519	max:9.021791	mean:2.340278	min:0.088377
+		ViewingZenithAngle---	nan percentage:0.310519	max:69.193031	mean:51.914574	min:20.523550
+		SolarZenithAngle---	nan percentage:0.310519	max:83.682640	mean:63.551738	min:39.195133
+2015-01-09
+	OMI-Aura_L3-OMUVBd_2015m0109_v003-2016m0804t125746.he5
+	OMI-Aura_L3-OMUVBd_2015m0109_v003-2016m0804t125746.he5.1
+		UVindex---	nan percentage:0.304000	max:8.909929	mean:2.421541	min:0.099284
+		ViewingZenithAngle---	nan percentage:0.304000	max:69.192192	mean:52.148439	min:20.523149
+		SolarZenithAngle---	nan percentage:0.304000	max:83.522102	mean:63.461630	min:39.042801
+2015-01-10
+	OMI-Aura_L3-OMUVBd_2015m0110_v003-2016m0804t131951.he5
+	OMI-Aura_L3-OMUVBd_2015m0110_v003-2016m0804t131951.he5.1
+		UVindex---	nan percentage:0.309333	max:8.655426	mean:2.341785	min:0.099157
+		ViewingZenithAngle---	nan percentage:0.309333	max:69.195183	mean:51.834389	min:20.523298
+		SolarZenithAngle---	nan percentage:0.309333	max:83.772453	mean:63.203806	min:38.900963
+
+
+# processing OMO3PR; print out processed file names by day; each day has multiple measurements; 
+# also print out some descriptive information by variable of interests;
+
+2015-01-01
+5
+	OMI-Aura_L2-OMO3PR_2015m0101t1441-o55663_v003-2015m0103t012306.he5
+	nan:0.575833	max:0.001199	min:0.000685
+	20150101
+	OMI-Aura_L2-OMO3PR_2015m0101t1620-o55664_v003-2015m0103t012225.he5
+	nan:0.500444	max:0.001424	min:0.000532
+	20150101
+	OMI-Aura_L2-OMO3PR_2015m0101t1759-o55665_v003-2015m0103t025655.he5
+	nan:0.077611	max:0.001586	min:0.000415
+	20150101
+	OMI-Aura_L2-OMO3PR_2015m0101t1938-o55666_v003-2015m0103t042913.he5
+	nan:0.150222	max:0.001601	min:0.000438
+	20150101
+	OMI-Aura_L2-OMO3PR_2015m0101t2117-o55667_v003-2015m0103t055513.he5
+	nan:0.348611	max:0.001668	min:0.000349
+	20150101
+	nan:0.001481	0.001380	0.000525	-60.125000	-134.875000	59.875000	15.125000
+2015-01-02
+4
+	OMI-Aura_L2-OMO3PR_2015m0102t1524-o55678_v003-2015m0104t000211.he5
+	nan:0.462611	max:0.001427	min:0.000553
+	20150102
+	OMI-Aura_L2-OMO3PR_2015m0102t1703-o55679_v003-2015m0104t032933.he5
+	nan:0.342870	max:0.001591	min:0.000544
+	20150102
+	OMI-Aura_L2-OMO3PR_2015m0102t1842-o55680_v003-2015m0104t053504.he5
+	nan:0.150426	max:0.001610	min:0.000512
+	20150102
+	OMI-Aura_L2-OMO3PR_2015m0102t2021-o55681_v003-2015m0104t065954.he5
+	nan:0.228426	max:0.001558	min:0.000457
+	20150102
+	nan:0.008500	0.001558	0.000519	-60.125000	-134.875000	59.875000	15.125000
+2015-01-03
+5
+	OMI-Aura_L2-OMO3PR_2015m0103t1429-o55692_v003-2015m0105t010138.he5
+	nan:0.611056	max:0.001259	min:0.000762
+	20150103
+	OMI-Aura_L2-OMO3PR_2015m0103t1608-o55693_v003-2015m0105t012617.he5
+	nan:0.362333	max:0.001548	min:0.000596
+	20150103
+	OMI-Aura_L2-OMO3PR_2015m0103t1746-o55694_v003-2015m0105t024217.he5
+	nan:0.088907	max:0.001625	min:0.000455
+	20150103
+	OMI-Aura_L2-OMO3PR_2015m0103t1925-o55695_v003-2015m0105t041712.he5
+	nan:0.127796	max:0.001575	min:0.000431
+	20150103
+	OMI-Aura_L2-OMO3PR_2015m0103t2104-o55696_v003-2015m0105t074347.he5
+	nan:0.307944	max:0.001417	min:0.000494
+	20150103
+	nan:0.000000	0.001271	0.000431	-60.125000	-134.875000	59.875000	15.125000
+2015-01-04
+4
+	OMI-Aura_L2-OMO3PR_2015m0104t1512-o55707_v003-2015m0106t014236.he5
+	nan:0.497296	max:0.001420	min:0.000714
+	20150104
+	OMI-Aura_L2-OMO3PR_2015m0104t1651-o55708_v003-2015m0106t032145.he5
+	nan:0.234537	max:0.001768	min:0.000547
+	20150104
+	OMI-Aura_L2-OMO3PR_2015m0104t1830-o55709_v003-2015m0106t051538.he5
+	nan:0.057722	max:0.001671	min:0.000438
+	20150104
+	OMI-Aura_L2-OMO3PR_2015m0104t2009-o55710_v003-2015m0106t050710.he5
+	nan:0.200667	max:0.001507	min:0.000502
+	20150104
+	nan:0.000000	0.001372	0.000595	-60.125000	-134.875000	59.875000	15.125000
+
+# processing CMAQ data. print out processed file by day. Processing a single time is very time consuming;
+TEMPLATE:WRFV381_CMAQ_DEVv5_2Gamma_14Mar2017_cb6r3_ae6nvPOA_aq_2014fb.12US1.35L.cmaq.conc.$Date$
+processing...WRFV381_CMAQ_DEVv5_2Gamma_14Mar2017_cb6r3_ae6nvPOA_aq_2014fb.12US1.35L.cmaq.conc.20140101
+Elapsed time is 109.064443 seconds.
+processing...WRFV381_CMAQ_DEVv5_2Gamma_14Mar2017_cb6r3_ae6nvPOA_aq_2014fb.12US1.35L.cmaq.conc.20140102
+Elapsed time is 96.606053 seconds.
+processing...WRFV381_CMAQ_DEVv5_2Gamma_14Mar2017_cb6r3_ae6nvPOA_aq_2014fb.12US1.35L.cmaq.conc.20140103
+Elapsed time is 103.158008 seconds.
+
+	
+# processing GFED data set; print out processed file names by year; each year has one file;
+reading...../data/unprocessed/GFED/GFED4.1s_2014.hdf5
+reading...../data/unprocessed/GFED/GFED4.1s_2015.hdf5
+reading...../data/unprocessed/GFED/GFED4.1s_2016.hdf5
+saving...../data/aggregate/GFED/GFEDFireCarbon_USGFED_2015_2015.mat
+
+############################################
+## Output from Run_InterpolateDataSummary###
+############################################
+
+
+# for meteorological reanalysis data: this controller file only prints out option used, year, input variable used, also tells users what it is doing (saving, removing missing values, taking mean values...)
+
+SiteName:AQRVPM25,Year:2010,Variable Name:apcp,Output format:By-Year,convolutional option:DailyMean
+../data/unprocessed/Data_3HourNCEP/apcp/apcp.2010.nc
+AQRVPM25
+2010
+apcp
+removing Fill Value...9.969210e+36
+removing missing Value...-9.969210e+36
+removing values outside valid range...0 100
+processing...taking...DailyMean
+removing Fill Value...9.969210e+36
+removing missing Value...-9.969210e+36
+removing values outside valid range...0 100
+saving...2010
+
+*************************	0
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:dlwrf,Output format:By-Year,convolutional option:DailyMean
+../data/unprocessed/Data_3HourNCEP/dlwrf/dlwrf.2010.nc
+AQRVPM25
+2010
+dlwrf
+removing Fill Value...9.969210e+36
+removing missing Value...-9.969210e+36
+removing values outside valid range...-30 650
+processing...taking...DailyMean
+removing Fill Value...9.969210e+36
+removing missing Value...-9.969210e+36
+removing values outside valid range...-30 650
+saving...2010
+
+
+# MOD09A1:since not all days have MOD09A1 measurements, the controller file only prints out file name when measurement is available.
+# the similar also holds for MOD13A2
+ 
+*************************	0
+*************************
+03-Jan-2010
+	reading A...20100101
+	reading B...20100109
+temporal interpolating...20100103
+04-Jan-2010
+	reading A...20100101
+	reading B...20100109
+temporal interpolating...20100104
+05-Jan-2010
+	reading A...20100101
+	reading B...20100109
+temporal interpolating...20100105
+06-Jan-2010
+	reading A...20100101
+	reading B...20100109
+temporal interpolating...20100106
+07-Jan-2010
+	reading A...20100101
+	reading B...20100109
+temporal interpolating...20100107
+08-Jan-2010
+	reading A...20100101
+	reading B...20100109
+temporal interpolating...20100108
+09-Jan-2010
+reading...../data/aggregate/MOD09A1/MOD09A1_20100109_20100109.mat
+10-Jan-2010
+	reading A...20100109
+	reading B...20100117
+temporal interpolating...20100110
+11-Jan-2010
+	reading A...20100109
+	reading B...20100117
+temporal interpolating...20100111
+12-Jan-2010
+	reading A...20100109
+	reading B...20100117
+temporal interpolating...20100112
+13-Jan-2010
+	reading A...20100109
+	reading B...20100117
+temporal interpolating...20100113
+14-Jan-2010
+	reading A...20100109
+	reading B...20100117
+temporal interpolating...20100114
+15-Jan-2010
+	reading A...20100109
+	reading B...20100117
+temporal interpolating...20100115
+
+# MOD11A1:the controller prints file names while reading:
+SiteName:AQRVPM25,Year:2010,Variable Name:MOD11A1,Output format:By-Year,convolutional option:NaN
+creating neighourhood files...
+reading...20100101 MOD11A1_USMOD11A1_20100101_20100101.mat
+reading...20100102 MOD11A1_USMOD11A1_20100102_20100102.mat
+reading...20100103 MOD11A1_USMOD11A1_20100103_20100103.mat
+reading...20100104 MOD11A1_USMOD11A1_20100104_20100104.mat
+reading...20100105 MOD11A1_USMOD11A1_20100105_20100105.mat
+reading...20100106 MOD11A1_USMOD11A1_20100106_20100106.mat
+reading...20100107 MOD11A1_USMOD11A1_20100107_20100107.mat
+reading...20100108 MOD11A1_USMOD11A1_20100108_20100108.mat
+reading...20100109 MOD11A1_USMOD11A1_20100109_20100109.mat
+reading...20100110 MOD11A1_USMOD11A1_20100110_20100110.mat
+reading...20100111 MOD11A1_USMOD11A1_20100111_20100111.mat
+reading...20100112 MOD11A1_USMOD11A1_20100112_20100112.mat
+
+#For MAIAC AOD data, the controller file prints out file names while reading:
+SiteName:AQRVPM25,Year:2010,Variable Name:MAIACUSAqua,Output format:By-Year,convolutional option:NaN
+creating neighourhood files...
+reading...20100101 MAIACUSAqua_USMAIACUS5km_20100101_20100101.mat
+reading...20100102 MAIACUSAqua_USMAIACUS5km_20100102_20100102.mat
+reading...20100103 MAIACUSAqua_USMAIACUS5km_20100103_20100103.mat
+reading...20100104 MAIACUSAqua_USMAIACUS5km_20100104_20100104.mat
+reading...20100105 MAIACUSAqua_USMAIACUS5km_20100105_20100105.mat
+reading...20100106 MAIACUSAqua_USMAIACUS5km_20100106_20100106.mat
+reading...20100107 MAIACUSAqua_USMAIACUS5km_20100107_20100107.mat
+reading...20100108 MAIACUSAqua_USMAIACUS5km_20100108_20100108.mat
+reading...20100109 MAIACUSAqua_USMAIACUS5km_20100109_20100109.mat
+reading...20100110 MAIACUSAqua_USMAIACUS5km_20100110_20100110.mat
+ 
+ 
+# for all OMI data set, the controller file prints option used, the data set being read, and output file name:
+# the output for CMAQ is similar
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:OMAERUVd_UVAerosolIndex,Output format:By-Year,convolutional option:NaN
+creating neighourhood files...
+reading...../data/aggregate/OMAERUVd/OMAERUVd_UVAerosolIndex_USOMAERUVd_2010_2010.mat
+saving...../../processed_data/AQRVPM25/OMAERUVd/OMAERUVd_UVAerosolIndex_Mean_Thres200000_AQRVPM25_20100101_20101231.mat
+*************************	0
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:OMAEROe_UVAerosolIndex,Output format:By-Year,convolutional option:NaN
+creating neighourhood files...
+reading...../data/aggregate/OMAEROe/OMAEROe_UVAerosolIndex_USOMAEROe_2010_2010.mat
+saving...../../processed_data/AQRVPM25/OMAEROe/OMAEROe_UVAerosolIndex_Mean_Thres100000_AQRVPM25_20100101_20101231.mat
+*************************	0
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:OMAEROe_VISAerosolIndex,Output format:By-Year,convolutional option:NaN
+reading...../data/aggregate/OMAEROe/OMAEROe_VISAerosolIndex_USOMAEROe_2010_2010.mat
+saving...../../processed_data/AQRVPM25/OMAEROe/OMAEROe_VISAerosolIndex_Mean_Thres100000_AQRVPM25_20100101_20101231.mat
+*************************	0
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:CMAQ_PM25_Vertical,Output format:By-Year,convolutional option:NaN
+creating neighourhood files...
+reading...../data/aggregate/CMAQ/CMAQ_PM25_Vertical_CMAQ_2010_2010.mat
+saving...../../processed_data/AQRVPM25/CMAQ/CMAQ_PM25_Vertical_Mean_Thres50000_AQRVPM25_20100101_20101231.mat
+*************************	0
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:CMAQ_PM25_TOT,Output format:By-Year,convolutional option:NaN
+reading...../data/aggregate/CMAQ/CMAQ_PM25_TOT_CMAQ_2010_2010.mat
+saving...../../processed_data/AQRVPM25/CMAQ/CMAQ_PM25_TOT_Mean_Thres50000_AQRVPM25_20100101_20101231.mat
+*************************	0
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:CMAQ_PM25_SO4,Output format:By-Year,convolutional option:NaN
+reading...../data/aggregate/CMAQ/CMAQ_PM25_SO4_CMAQ_2010_2010.mat
+saving...../../processed_data/AQRVPM25/CMAQ/CMAQ_PM25_SO4_Mean_Thres50000_AQRVPM25_20100101_20101231.mat
+*************************	0
+*************************
+
+
+# nearby monitoring data: the controller file prints option used, the data set being read, and output file name:
+*************************	0
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:NO2,Output format:Peak2_Lag0,convolutional option:NaN
+creating neighourhood files...
+reading...../../processed_data/EPANO2/Monitor/MONITOR_NO2_EPANO2_2010_2010.mat
+saving...../../processed_data/AQRVPM25/Nearby/MONITOR_Peak2Lag0_ThresInf_NO2_AQRVPM25_20100101_20101231.mat
+*************************	0
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:NO2,Output format:Peak2_Lag1,convolutional option:NaN
+reading...../../processed_data/EPANO2/Monitor/MONITOR_NO2_EPANO2_2010_2010.mat
+saving...../../processed_data/AQRVPM25/Nearby/MONITOR_Peak2Lag1_ThresInf_NO2_AQRVPM25_20100101_20101231.mat
+*************************	0
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:NO2,Output format:Peak2_Lag3,convolutional option:NaN
+reading...../../processed_data/EPANO2/Monitor/MONITOR_NO2_EPANO2_2010_2010.mat
+saving...../../processed_data/AQRVPM25/Nearby/MONITOR_Peak2Lag3_ThresInf_NO2_AQRVPM25_20100101_20101231.mat
+
+## land use data: the controller file prints option used, the data set being read, and output file name; 
+## if the controller file read two land use variables and did some interpolation, it prints names of both files.
+
+*************************	0
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:RoadDensity_prisecroads1000,Output format:By-Year,convolutional option:NaN
+reading...../data/aggregate/LANDUSE/RoadDensity_prisecroads1000_2010_2010.tif
+*************************	0
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:RoadDensity_prisecroads10000,Output format:By-Year,convolutional option:NaN
+reading...../data/aggregate/LANDUSE/RoadDensity_prisecroads10000_2010_2010.tif
+*************************	0
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:RoadDensity_roads1000,Output format:By-Year,convolutional option:NaN
+reading...../data/aggregate/LANDUSE/RoadDensity_roads1000_2010_2010.tif
+*************************	0
+*************************
+SiteName:AQRVPM25,Year:2010,Variable Name:NLCD_Water100,Output format:By-Year,convolutional option:NaN
+	reading A...../data/aggregate/LANDUSE/NLCD_Water100_2006_2006.tif
+	reading B...../data/aggregate/LANDUSE/NLCD_Water100_2011_2011.tif
+temporal interpolating...2010
+*************************	0
+*************************
+
+		
+##########################################
+## Output from Run_AssembleDataSummary###
+##########################################		
+
+Run_AssembleDataSummary(1,99941,2008,'All_round3','Ozone','AllRecords','');
+reading ./VariableList_99941.csv
+variables to be read...
+MonitorData
+MOD13A2_Nearest4
+USElevation_dsc10000
+USElevation_max100
+USElevation_max10000
+USElevation_mea100
+USElevation_mea10000
+USElevation_med100
+USElevation_med10000
+USElevation_min100
+USElevation_min10000
+USElevation_std100
+USElevation_std10000
+USElevation_bln100
+USElevation_bln10000
+NLCD_Barren100
+NLCD_Barren10000
+NLCD_Developed100
+NLCD_Developed10000
+NLCD_Herbaceous100
+NLCD_Herbaceous10000
+NLCD_Planted100
+NLCD_Planted10000
+NLCD_Shrubland100
+NLCD_Shrubland10000
+NLCD_Water100
+NLCD_Water10000
+NLCD_Wetlands100
+NLCD_Wetlands10000
+NLCD_Impervious100
+NLCD_Impervious10000
+NLCD_canopy100
+NLCD_canopy10000
+RoadDensity_primaryroads1000
+RoadDensity_primaryroads10000
+RoadDensity_prisecroads1000
+RoadDensity_prisecroads10000
+RoadDensity_roads1000
+Business_Restaurant1000
+REANALYSIS_hpbl_DailyMax
+REANALYSIS_shum_2m_DailyMax
+REANALYSIS_windspeed_10m_DailyMax
+REANALYSIS_prate_DailyMax
+REANALYSIS_vis_DailyMax
+REANALYSIS_apcp_DailyMean
+REANALYSIS_dlwrf_DailyMean
+REANALYSIS_dswrf_DailyMean
+REANALYSIS_evap_DailyMean
+REANALYSIS_hpbl_DailyMean
+REANALYSIS_gflux_DailyMean
+REANALYSIS_lhtfl_DailyMean
+REANALYSIS_shtfl_DailyMean
+REANALYSIS_shum_2m_DailyMean
+REANALYSIS_snowc_DailyMean
+REANALYSIS_soilm_DailyMean
+REANALYSIS_tcdc_DailyMean
+REANALYSIS_ulwrf_DailyMean
+REANALYSIS_omega_DailyMean
+REANALYSIS_windspeed_10m_DailyMean
+REANALYSIS_weasd_DailyMean
+REANALYSIS_prate_DailyMean
+REANALYSIS_vis_DailyMean
+REANALYSIS_hpbl_DailyMin
+REANALYSIS_shum_2m_DailyMin
+REANALYSIS_windspeed_10m_DailyMin
+REANALYSIS_prate_DailyMin
+REANALYSIS_vis_DailyMin
+REANALYSIS_hpbl_1Day
+REANALYSIS_shum_2m_1Day
+REANALYSIS_windspeed_10m_1Day
+REANALYSIS_prate_1Day
+REANALYSIS_vis_1Day
+MOD11A1_LST_Day_1km_Nearest4
+MOD11A1_LST_Night_1km_Nearest4
+MOD11A1_Clear_day_cov_Nearest4
+MOD11A1_Clear_night_cov_Nearest4
+MAIACUS_Optical_Depth_047_Aqua_Nearest4
+MAIACUS_Optical_Depth_055_Aqua_Nearest4
+MAIACUS_Optical_Depth_047_Terra_Nearest4
+MAIACUS_Optical_Depth_055_Terra_Nearest4
+MAIACUS_cosVZA_Aqua_Nearest
+MAIACUS_cosVZA_Terra_Nearest
+REANALYSIS_air_sfc_DailyMin
+REANALYSIS_air_sfc_DailyMean
+REANALYSIS_air_sfc_DailyMax
+REANALYSIS_air_sfc_1Day
+Other_Lat
+Other_Lon
+CalendarDay
+Spatial_Lagged_1
+Spatial_Lagged_2
+Spatial_Lagged_3
+Temporal_Lagged_1
+Temporal_Lagged_2
+Temporal_Lagged_3
+GFEDFireCarbon
+CMAQ_NO2
+CMAQ_NO2_Vertical
+CMAQ_Ozone
+CMAQ_Ozone_Vertical
+CMAQ_PM25_TOT
+CMAQ_PM25_Vertical
+CMAQ_PM25_NO3
+CMAQ_PM25_SO4
+OMAEROe_UVAerosolIndex_Mean
+OMAEROe_VISAerosolIndex_Mean
+OMAERUVd_UVAerosolIndex_Mean
+OMNO2d_ColumnAmountNO2StratoCloudScreened_Mean
+OMSO2e_ColumnAmountSO2_PBL_Mean
+OMUVBd_UVindex_Mean
+OMTO3e_ColumnAmountO3
+OMO3PR
+MOD04L2_550
+MOD09A1
+PM25_Region
+Ozone_Region
+NO2_Region
+Nearby_Peak2_NO2
+Nearby_Peak2_PM25
+Nearby_Peak2_Ozone
+Nearby_Peak2Lag1_NO2
+Nearby_Peak2Lag1_PM25
+Nearby_Peak2Lag1_Ozone
+Nearby_Peak2Lag3_NO2
+Nearby_Peak2Lag3_PM25
+Nearby_Peak2Lag3_Ozone
+
+		

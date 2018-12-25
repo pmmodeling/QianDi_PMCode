@@ -1,0 +1,65 @@
+#!/bin/bash
+#SBATCH -J RunInterp
+#SBATCH -N 1
+#SBATCH -n 1 # Number of cores 
+#SBATCH -o Run_InterpolateDataSummary_%A%a.out
+#SBATCH -e Run_InterpolateDataSummary_%A%a.err
+#SBATCH -t 10000 #Runtime in minutes 
+#SBATCH -p serial_requeue #Partition to submit to 
+#SBATCH --mem=15000 #Memory per cpu in MB (see also --mem)
+#SBATCH --mail-type=END      #Type of email notification- BEGIN,END,FAIL,ALL
+#SBATCH --mail-user=qiandi@mail.harvard.edu  #Email to which notifications will be sent
+
+cd /n/regal/jschwrtz_lab/qdi/USTemperature/raw_data/matlab_to_interpolate/
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+0,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+1,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+2,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+3,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+4,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+5,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+6,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+7,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+8,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+9,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+10,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+11,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+12,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+13,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+14,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+15,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+16,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+17,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+18,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+19,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+20,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+21,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+22,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+23,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+24,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+25,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+26,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+27,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+28,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+29,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+30,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+31,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+32,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+33,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+34,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+35,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+36,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+37,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+38,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+39,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+40,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+41,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+42,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+43,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+44,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+45,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+46,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+47,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+48,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+49,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+matlab -nodesktop -r "Run_InterpolateDataSummary(""${SLURM_ARRAY_TASK_ID}""+50,[datenum(2000,1,1),datenum(2000,12,31)],0,nan)"
+
